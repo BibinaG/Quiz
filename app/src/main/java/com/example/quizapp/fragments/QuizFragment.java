@@ -26,6 +26,8 @@ import com.example.quizapp.model.UserModel;
 import com.example.quizapp.viewmodel.QuizVM;
 import com.google.gson.Gson;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,6 +45,7 @@ public class QuizFragment extends Fragment implements View.OnClickListener {
     int mCorrectAnswers = 0;
 
     boolean timesUp = false;
+    private CountDownTimer countDownTimer;
 
 
     @Override
@@ -67,6 +70,7 @@ public class QuizFragment extends Fragment implements View.OnClickListener {
     private void observeViewModel() {
         quizVM.getResponseMutableLiveData().observe(this, questionResponse -> {
             if (questionResponse.getResults() != null) {
+
                 fragmentQuizBinding.progressbar.setVisibility(View.GONE);
                 for (ResultData reposeModel : questionResponse.getResults()) {
                     fragmentQuizBinding.tvQuestion.setText(reposeModel.question);
@@ -112,36 +116,43 @@ public class QuizFragment extends Fragment implements View.OnClickListener {
                 selectedOptionView(fragmentQuizBinding.tvOptionFour, 4);
                 break;
             case R.id.btnSubmit:
-//                if (!timesUp) {
-                if (mSelectedOptionPosition == 0) {
-                    mCurrentPosition++;
-                    if (mCurrentPosition <= mQuestionsList.size()) {
-                        setQuestion();
-                    } else {
-                        Bundle bundle = new Bundle();
-                        bundle.putString("name", WelcomeFragment.loginUserName);
-                        bundle.putInt("mCorrectAnswers", mCorrectAnswers);
-                        bundle.putInt("totalQuestion", mQuestionsList.size());
-                        Navigation.findNavController(v).navigate(R.id.action_quizFragment_to_resultFragment, bundle);
+                if (!timesUp) {
+                    if (mSelectedOptionPosition == 0) {
+                        mCurrentPosition++;
+                        if (mCurrentPosition <= mQuestionsList.size()) {
+                            setQuestion();
+                        } else {
+                            Bundle bundle = new Bundle();
+                            bundle.putString("name", WelcomeFragment.loginUserName);
+                            bundle.putInt("mCorrectAnswers", mCorrectAnswers);
+                            bundle.putInt("totalQuestion", mQuestionsList.size());
+                            Navigation.findNavController(v).navigate(R.id.action_quizFragment_to_resultFragment, bundle);
 
-                    }
+                        }
 
-                } else {
-                    ResultData question = mQuestionsList.get(mCurrentPosition - 1);
-                    int correctOptionPosition = allOptions.indexOf(question.getCorrect_answer()) + 1;
-                    if (correctOptionPosition != mSelectedOptionPosition) {
-                        answerView(mSelectedOptionPosition, R.drawable.incorrect_option_border);
                     } else {
-                        mCorrectAnswers++;
-                    }
-                    answerView(correctOptionPosition, R.drawable.correct_option_border);
+                        ResultData question = mQuestionsList.get(mCurrentPosition - 1);
+                        int correctOptionPosition = allOptions.indexOf(question.getCorrect_answer()) + 1;
+                        if (correctOptionPosition != mSelectedOptionPosition) {
+                            answerView(mSelectedOptionPosition, R.drawable.incorrect_option_border);
+                        } else {
+                            mCorrectAnswers++;
+                        }
+                        answerView(correctOptionPosition, R.drawable.correct_option_border);
 
-                    if (mCurrentPosition == mQuestionsList.size()) {
-                        fragmentQuizBinding.btnSubmit.setText(" FINISH");
-                    } else {
-                        fragmentQuizBinding.btnSubmit.setText("GO TO NEXT QUESTION");
+                        if (mCurrentPosition == mQuestionsList.size()) {
+                            fragmentQuizBinding.btnSubmit.setText(" FINISH");
+                        } else {
+                            fragmentQuizBinding.btnSubmit.setText("GO TO NEXT QUESTION");
+                        }
+                        mSelectedOptionPosition = 0;
                     }
-                    mSelectedOptionPosition = 0;
+                }else {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("name", WelcomeFragment.loginUserName);
+                    bundle.putInt("mCorrectAnswers", mCorrectAnswers);
+                    bundle.putInt("totalQuestion", mQuestionsList.size());
+                    Navigation.findNavController(v).navigate(R.id.action_quizFragment_to_resultFragment, bundle);
                 }
                 break;
         }
@@ -212,22 +223,25 @@ public class QuizFragment extends Fragment implements View.OnClickListener {
     }
 
     private void startCountDown() {
-        new CountDownTimer(119000, 1000) {
+        new CountDownTimer(119000, 1000) { // Adjusted to 119000 milliseconds (1 minute and 59 seconds)
             @Override
             public void onTick(long millisUntilFinished) {
                 long minutes = (millisUntilFinished / 1000) / 60;
                 long seconds = (millisUntilFinished / 1000) % 60;
-                fragmentQuizBinding.tvCounter.setText(minutes + " : " + seconds);
+                fragmentQuizBinding.tvCounter.setText(String.format("%d : %02d", minutes, seconds));
             }
 
             @Override
             public void onFinish() {
                 fragmentQuizBinding.tvCounter.setText("Times Up.");
-                fragmentQuizBinding.btnSubmit.setText(" FINISH");
-                mSelectedOptionPosition = 0;
-                timesUp = true;
+                fragmentQuizBinding.btnSubmit.setText("FINISH");
 
             }
-        };
+        }.start();
+        if (fragmentQuizBinding.tvCounter.getText().toString().equalsIgnoreCase("Times Up")) {
+            timesUp = true;
+        }
+
+
     }
 }
