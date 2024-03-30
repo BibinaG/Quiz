@@ -7,7 +7,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Query;
 
 public interface RetroServiceInterface {
-    @GET("")
-    Call<QuestionResponse> getQuestions(@Query("amount") String amount, @Query("type") String type);
+    @GET("api.php")
+    Call<QuestionResponse> getQuestions(@Query("amount") int amount, @Query("type") String type);
 
 }
